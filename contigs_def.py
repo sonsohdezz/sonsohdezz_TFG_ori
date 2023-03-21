@@ -1,4 +1,5 @@
-# SCRIPT PARA GENERACIÓN DE CONTIGS
+# SCRIPT PARA GENERACIÓN DE CONTIGS PARAMETRADO
+
 
 
 # Importamos los módulos que se van a usar.
@@ -38,7 +39,7 @@ def main(argv):
 	window_size = ''
 
 	try:
-		opts, args = getopt.getopt(argv, "i:o:c:w:")
+		opts, args = getopt.getopt(argv, "i:o:c:w:h")
 	except getopt.GetoptError:
 		help()
 		sys.exit(2)
@@ -51,7 +52,7 @@ def main(argv):
 	# Para cada parámetro, comprobamos el argumento introducido y almacenamos la información si es correcta.
 	for opt, arg in opts:
 
-		if opt == '-h' or opt == '-help':
+		if opt in ("-h"):
 			help()
 			sys.exit()
 
@@ -187,6 +188,9 @@ def multifasta(fragments, file_name, outputdir):
 
 
 ## ___________________________________________________________________________________________________________________________________
+
+
+# EJECUCIÓN DE LAS DISTINTAS FUNCIONES
 
 
 inputfile, outputdir, fragment_size, window_size = main(sys.argv[1:])
