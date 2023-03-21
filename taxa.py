@@ -268,33 +268,33 @@ dic_wORFs = fusion(taxas)
 
 dic_stat, ORFs = stat(dic_wORFs)
 
-for i in dic_stat.items():
-    print(i)
+# for i in dic_stat.items():
+#     print(i)
 
 
 # Generamos un DATAFRAME a partir del diccionario final con los datos estadísticos de los taxa de cada contig.
-# df = pd.DataFrame.from_dict(dic_stat)
+df = pd.DataFrame.from_dict(dic_stat)
 
-# df_transposed = df.T                                                               # Invertimos columnas y filas para obtener los contigs en las filas.
-# df_transposed.insert(0, 'NUM_ORFs', ORFs, True)                                    # Añadimos una columna con el número de ORFs de cada contig.
-# df_transposed.index.name = 'CONTIG_ID'                                             # Le damos nombre a la primera columna.
-# df_transposed.rename(columns = {'SPECIES GROUP':'SPECIES'}, inplace = True)        # Cambiamos el nombre de la columna de especies.   
+df_transposed = df.T                                                               # Invertimos columnas y filas para obtener los contigs en las filas.
+df_transposed.insert(0, 'NUM_ORFs', ORFs, True)                                    # Añadimos una columna con el número de ORFs de cada contig.
+df_transposed.index.name = 'CONTIG_ID'                                             # Le damos nombre a la primera columna.
+df_transposed.rename(columns = {'SPECIES GROUP':'SPECIES'}, inplace = True)        # Cambiamos el nombre de la columna de especies.   
 
-# # Ordenamos las columnas con los 7 rangos deseados y guardamos la tabla en una variable.
-# def_table = df_transposed[['NUM_ORFs','SUPERKINGDOM','PHYLUM','CLASS','ORDER','FAMILY','GENUS', 'SPECIES']]
+# Ordenamos las columnas con los 7 rangos deseados y guardamos la tabla en una variable.
+def_table = df_transposed[['NUM_ORFs','SUPERKINGDOM','PHYLUM','CLASS','ORDER','FAMILY','GENUS', 'SPECIES']]
 
 
-# # Damos la opción de ver el dataframe en pantalla y/o de guardar en un documento .csv .
-# ans1 = input("> ¿Quiere visualizar el dataframe en el terminal? [y/n]\n")
-# ans1 = ans1.upper()
-# if ans1 == "Y":
-#     print(def_table)
+# Damos la opción de ver el dataframe en pantalla y/o de guardar en un documento .csv .
+ans1 = input("> ¿Quiere visualizar el dataframe en el terminal? [y/n]\n")
+ans1 = ans1.upper()
+if ans1 == "Y":
+    print(def_table)
 
-# ans2 = input("\n> ¿Quiere guardar el dataframe con los resultados en un archivo? [y/n]\n")
-# ans2 = ans2.upper()
-# if ans2 == "Y":
-#    def_table.to_csv('dataframe.csv')
-#    print("\nArchivo guardado como 'dataframe.csv'.")
+ans2 = input("\n> ¿Quiere guardar el dataframe con los resultados en un archivo? [y/n]\n")
+ans2 = ans2.upper()
+if ans2 == "Y":
+   def_table.to_csv('dataframe.csv')
+   print("\nArchivo guardado como 'dataframe.csv'.")
 
 
 # # # __________________________________________________________________________________________________________________________________________
