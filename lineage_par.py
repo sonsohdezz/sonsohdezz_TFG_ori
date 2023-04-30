@@ -257,39 +257,18 @@ def phylo(dic_ranks):
 # Función que genera un diccionario con la lista de taxas para cada ORF de cada contig.
 def fusion(filo_dic):
 
-	# Creamos dos listas donde almacenaremos los ORFs (keys) y los linajes (values).
-	contig_ids_list = []
-	list_of_lineages = []
+	fusion_dic = {}                               # Creamos un nuevo diccionario.
 
 	# Formateamos los nombres de las filas que corresponden a DISTINTOS ORFs de un MISMO contig, y les damos a todas el MISMO NOMBRE.
 	for ORF in filo_dic:
 		lineage = filo_dic[ORF]
-		contig_id = ORF[:-2]                      # Eliminamos los dos últimos carácteres del nombre (ej: FRAGMENTO_1_2 = FRAGMENTO_1).
-		list_of_lineages.append(lineage)          # Almacenamos el linaje de cada ORF de un mismo contig a una misma lista.
-		contig_ids_list.append(contig_id)      	# Añadimos los distintos nombres nuevos para cada ORF a una misma lista.
-		
-	fusion_dic = {}                               # Creamos un nuevo diccionario.
-
-	# Creamos una función que devuelve las posisiciones de las filas con el mismo nombre (filas de los disintos ORFs de un MISMO contig).
-	def list_duplicates_of(seq,item):
-		start_at = -1
-		locs = []
-		while True:
-			try:
-				loc = seq.index(item,start_at+1)
-			except ValueError:
-				break
-			else:
-				locs.append(loc)
-				start_at = loc
-		return locs
-
-	lineages_result_list = []                              # Creamos una nueva lista.    
-
-	for contig in contig_ids_list:
-		indexes = list_duplicates_of(contig_ids_list, contig)     					# Almacenamos las posiciones de las filas con nombre de queries iguales.
-		lineages_result_list = [list_of_lineages[i] for i in indexes]       # Extraemos la lista de taxas de esas filas y la añadimos a una misma lista.
-		fusion_dic[contig] = lineages_result_list                         		# El diccionario tiene como values las listas de taxas de cada ORF de un contig.
+		contig_id = "_".join(ORF.split("_")[:-1])                      # Eliminamos los dos últimos carácteres del nombre (ej: FRAGMENTO_1_2 = FRAGMENTO_1).
+		if contig_id in fusion_dic:
+			contig_list = fusion_dic[contig_id]
+		else:
+			contig_list = []
+			fusion_dic[contig_id] = contig_list
+		contig_list.append(lineage)
 
 	return fusion_dic
 
@@ -300,17 +279,17 @@ def format(fusion_dic):
 	new_lineages_dic = {}
 
 	# Recorremos las keys del diccionario de la función anterior.
-	for item in fusion_dic.keys():
+	for contig_ID, lineages_lists in fusion_dic.items():
     
-		contig_ID = item                   	# Variable con el ID del contig.
-		lineages_lists = fusion_dic[item]    # Lista con las listas de linajes de cada ORF para cada contig (value del dic anterior).
+		# contig_ID = item                   	# Variable con el ID del contig.
+		# lineages_lists = fusion_dic[item]    # Lista con las listas de linajes de cada ORF para cada contig (value del dic anterior).
 
 		# print(contig_ID)
 		# print(lineages_lists)
 		# print(n_ORFs)
 
 		# Creamos un diccionario de referencia que transforma los nombres de los rangos taxonómicos de interés en iniciales.
-		ref_dic = {'SUPERKINGDOM':'SK', 'PHYLUM':'P', 'CLASS':'C', 'ORDER':'O', 'GENUS':'G', 'SPECIES GROUP':'SG'}	
+		ref_dic = {'SUPERKINGDOM':'SK', 'PHYLUM':'P', 'CLASS':'C', 'ORDER':'O', 'FAMILY':'F', 'GENUS':'G', 'SPECIES GROUP':'SG'}	
 
 		new_lineages_list = []
 
@@ -323,7 +302,7 @@ def format(fusion_dic):
 			for rank in lineage:
 				
 				# Si el rango se encuentra en los rangos del diccionario de referencia, se coge el valor y se transforma el rango en su inicial.
-				if rank in ref_dic.keys():
+				if rank in ref_dic:
 					new_rank_name = ref_dic[rank]
 					value = lineage[rank]
 					new_value = value.split('|')[1] 
@@ -349,24 +328,27 @@ def best_lineage(new_lineages_dic):
 	ORFs = []                              # Creamos una lista donde almacenaremos el número de ORFs para cada contig.
 
 	# Recorremos el diccionario de la función anterior cuyas keys son los contig_IDs y las values son las listas de linajes de los ORFs del contig.
-	for contig in new_lineages_dic:
-		
-		contig_ID = contig 											# Definimos el contig_ID.
-		lists_of_lineages = new_lineages_dic[contig]			# En una variable, almacenamos las listas de linajes de los ORFs del contig.
-		n_ORFs = len(lists_of_lineages)         				# Número de ORFs = número de listas (value).
-
-		# Añadimos el número de ORFs del contig a la lista general de ORFs.
-		ORFs.append(n_ORFs)
+	for contig_ID, lists_of_lineages in new_lineages_dic.items():
 
 		lineage_count_dic = {tuple(i):lists_of_lineages.count(i) for i in lists_of_lineages}		# Contamos el número de apariciones de cada linaje.
-
-		max_lineage = max(lineage_count_dic)
+		
+		# max_lineage = max(lineage_count_dic)
 		max_value = max(lineage_count_dic.values())
+
+		max_lineages = [lineage for lineage in lineage_count_dic if lineage_count_dic[lineage] == max_value]
+		max_lineage = [lineage for lineage in max_lineages if len(lineage)==max([len(lin) for lin in max_lineages])]
+		if len(max_lineage) > 1:
+			continue
+
+		n_ORFs = len(lists_of_lineages)         				# Número de ORFs = número de listas (value).
 		lineage_freq = round((max_value/n_ORFs), 2)
 
-		best_lineage_dic[contig_ID] = (max_lineage, lineage_freq)
+		best_lineage_dic[contig_ID] = (max_lineage, lineage_freq, n_ORFs)
 
-	return best_lineage_dic, ORFs
+		# Añadimos el número de ORFs del contig a la lista general de ORFs.
+		# ORFs.append(n_ORFs)
+
+	return best_lineage_dic# , ORFs
 
 
 # _____________________________________________________________________________________________________________________________
@@ -376,9 +358,13 @@ def best_lineage(new_lineages_dic):
 
 input_file, file_name, contig_table = main(sys.argv[1:])
 info = info(input_file)
+# print(info, file = sys.stderr)
 taxas = taxas(info)
+# print(taxas, file = sys.stderr)
 dic_ranks = ranks(taxas)
+# print(dic_ranks, file = sys.stderr)
 filo_dic = phylo(dic_ranks)
+# print(filo_dic, file = sys.stderr)
 
 
 # Generamos un DATAFRAME DE ORFS a partir del diccionario final con los datos estadísticos de los taxa de cada ORF.
@@ -400,20 +386,27 @@ print("\n(1/2) Dataframe de ORFs creado y guardado como " + file_name + "_lineag
 
 
 if contig_table == True:
-
+	print(list(filo_dic.items())[15:19], file = sys.stderr)
+	print()
 	fusion_dic = fusion(filo_dic)
+	print(list(fusion_dic.items())[5], file = sys.stderr)
+	print()
 	new_lineages_dic = format(fusion_dic)
-	stat_dic, ORFs = best_lineage(new_lineages_dic)
+	print(list(new_lineages_dic.items())[5], file = sys.stderr)
+	print()
+	stat_dic = best_lineage(new_lineages_dic)
+	# print(stat_dic, file = sys.stderr)
+	# print(ORFs, file = sys.stderr)
 
 	# Generamos un DATAFRAME a partir del diccionario final con los datos estadísticos de los taxa de cada contig.
 	df_2 = pd.DataFrame.from_dict(stat_dic)
 
 	df_2_transposed = df_2.T											# Invertimos columnas y filas para obtener los contigs en las filas.
 	df_2_transposed.index.name = 'CONTIG_ID'						# Le damos nombre a la primera columna.
-	df_2_transposed.insert(0, 'NUM_ORFs', ORFs, True)			# Añadimos una columna con el número de ORFs de cada contig.
+	# df_2_transposed.insert(0, 'NUM_ORFs', ORFs, True)			# Añadimos una columna con el número de ORFs de cada contig.
 
 	# Ordenamos las columnas con las 3 columnas deseados y guardamos la tabla en un archivo .csv.
-	def_table_2 = df_2_transposed.rename(columns = {0:'TAXONOMY', 1:'FREQUENCY'})
+	def_table_2 = df_2_transposed.rename(columns = {0:'TAXONOMY', 1:'FREQUENCY', 2:'NUM_ORFs'})
 	def_table_2.to_csv(file_name + '_lineage_contigs.csv')
 
 	print("(2/2) Dataframe de contigs creado y guardado como " + file_name + "_lineage_contigs.csv\n")
